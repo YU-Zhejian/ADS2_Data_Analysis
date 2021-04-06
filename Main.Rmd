@@ -1,0 +1,150 @@
+---
+title: "Report"
+author: "ADS2 Group 4"
+date: "`r Sys.time()`"
+output:
+  pdf_document:
+    toc: yes
+    number_sections: yes
+    toc_depth: 5
+    keep_tex: yes
+    extra_dependencies: ["times", "titlesec"]
+    latex_engine: pdflatex
+geometry: inner=0.5in,outer=0.5in
+---
+
+If there is error occurred during the compilation of this R Markdown, please make sure that you're using a modern \LaTeX distribution with following macro packages installed:
+
+* `times`
+* `titlesec`
+
+This document is created with \TeX Live 2021 \& R 4.0.5
+
+\titleformat{\section}[frame]{\bf\sf\LARGE}{\small Section \thesection}{0pt}{}
+\titleformat{\subsection}[frame]{\bf\sf\large}{\small SubSection \thesubsection}{0pt}{}
+\titleformat{\subsubsection}[frame]{\bf\sf}{\small SubSubSection \thesubsubsection}{0pt}{}
+
+
+# Global Libraries
+
+Locating global libraries.
+
+```{r global libraries}
+# Remove cached variables
+rm(list = ls())
+# Knitr Options
+knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
+# Check whether the dependencies are met
+installed <- installed.packages()[, 1]
+for (packages in c("tidyverse", "ggubr", "knitr", "rmarkdown", "stringr")) {
+  if (!packages %in% installed) {
+    simpleError(paste0("Package ", packages, " not installed."))
+  }
+}
+# Source global packages
+library(tidyverse)
+library(ggpubr)
+```
+
+# Data Cleaning
+
+```{r Read Data}
+if (!file.exists("substance_use.csv")) simpleError(paste0("File substance_use.csv not exist!"))
+# TODO: Downloa the file if not exist.
+sub_use <- read.csv("substance_use.csv")
+```
+
+Use `head` and `summary` to explore data.
+
+```{r Summary}
+summary(sub_use)
+slice_head(sub_use,n=3)
+```
+
+We discovered that there is only `Percent` in the `metric` column. This column is therefore removed.
+
+```{r Remove metric}
+summary(factor(sub_use$metric))
+sub_use <- select(sub_use, !(metric))
+```
+
+Check whether there are `NA`s inside.
+
+```{r deNA}
+summary(complete.cases(sub_use))
+```
+
+It is clear that there's no `NA` inside.
+
+# Part 1: Exploring the Data
+
+## Question 1: Which region of the word have the highest rate of alcohol-related deaths among man aged 40-44 in 2019?
+
+```{r P1Q1}
+# Get all data satisfying the criteria
+sub_use40_44 <- sub_use[sub_use$year == 2019 &
+                          sub_use$sex == "Male" &
+                          sub_use$cause == "Alcohol use disorders" &
+                          sub_use$age == "40 to 44" &
+                          sub_use$measure == "Deaths",]
+# Sort the result by val in reverse order
+sub_use_arranged <- arrange(sub_use40_44, desc(val))
+# Pick the highest one and get its location
+sub_use_arranged[1,"location"]
+```
+
+## Question 2: Looking at the prevalence of alcohol-related disease in the East Asia and Pacific region, how has this changed over time and in the different age groups? Is there a difference between men and women?
+
+```{r P1Q2}
+sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
+                             sub_use$location == "East Asia & Pacific - WB" &
+                             sub_use$cause == "Alcohol use disorders",]
+
+g <- ggplot(sub_use_alcohol) +
+  geom_point(aes(x = year, y = val, color = age, shape = sex), show.legend = TRUE) +
+  facet_grid(. ~ sex) +
+  labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
+  x = "Year", y = "Prevalence")
+g
+```
+
+TODO: How it is changed
+
+To determine whether there's a difference between man and woman, we would like to perform a statistical test.
+
+* Null hypothesis (H0): There is no difference between male and female.
+* Alternative hypothesis (H1): There is a difference between male and female.
+
+Firstly, let's determine whether the data of amn and woman is normally distributed:
+
+```{r}
+sub_use_alcohol_M <- sub_use_alcohol[sub_use_alcohol$sex == "Male", ]
+sub_use_alcohol_F <- sub_use_alcohol[sub_use_alcohol$sex != "Male", ]
+shapiro.test(sub_use_alcohol_M$val)
+shapiro.test(sub_use_alcohol_F$val)
+```
+
+From the Shapiro-Wilk normality test, we may discover that the data of male and female is not normally distributed. So we will use a Wilcoxon rank sum test.
+
+```{r}
+wilcox.test(sub_use_alcohol_M$val,sub_use_alcohol_F$val)
+```
+
+From the test we can conclude that the alternative hypothesis is true. That is, there is a difference between male and female.
+
+## Looking at the data from the United States, can you confirm an increase in the prevalence of diseases related to opioid use? What age group is the most affected?
+
+```{r P1Q3}
+sub_use_Opioid <- sub_use[sub_use$measure == "Deaths" &
+                            sub_use$location == "North America" &
+                            sub_use$cause == "Opioid use disorders",]
+
+G <- ggplot(sub_use_Opioid) +
+  geom_point(aes(x = year, y = val, color = age, shape = sex), show.legend = TRUE) +
+  facet_grid(. ~ sex)
+G
+
+```
+
