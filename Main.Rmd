@@ -8,21 +8,9 @@ output:
     number_sections: yes
     toc_depth: 5
     keep_tex: yes
-    extra_dependencies: ["times", "titlesec"]
     latex_engine: pdflatex
 geometry: inner=0.5in,outer=0.5in
 ---
-
-If there is error occurred during the compilation of this R Markdown, please make sure that you're using a modern \LaTeX distribution with following macro packages installed:
-
-* `times`
-* `titlesec`
-
-This document is created with \TeX Live 2021 \& R 4.0.5
-
-\titleformat{\section}[frame]{\bf\sf\LARGE}{\small Section \thesection}{0pt}{}
-\titleformat{\subsection}[frame]{\bf\sf\large}{\small SubSection \thesubsection}{0pt}{}
-\titleformat{\subsubsection}[frame]{\bf\sf}{\small SubSubSection \thesubsubsection}{0pt}{}
 
 
 # Global Libraries
