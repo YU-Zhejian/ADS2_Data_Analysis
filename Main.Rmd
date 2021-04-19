@@ -40,7 +40,7 @@ library(ggpubr)
 
 ```{r Read Data}
 if (!file.exists("substance_use.csv")) simpleError(paste0("File substance_use.csv not exist!"))
-# TODO: Downloa the file if not exist.
+# TODO: Download the file if not exist.
 sub_use <- read.csv("substance_use.csv")
 ```
 
@@ -51,7 +51,7 @@ summary(sub_use)
 slice_head(sub_use,n=3)
 ```
 
-We discovered that there is only `Percent` in the `metric` column. This column is therefore removed.
+We discovered that there is only `"Percent"` in the `metric` column. This column is therefore removed.
 
 ```{r Remove metric}
 summary(factor(sub_use$metric))
@@ -64,11 +64,13 @@ Check whether there are `NA`s inside.
 summary(complete.cases(sub_use))
 ```
 
-It is clear that there's no `NA` inside.
+It is clear that there is no `NA` inside.
 
 # Part 1: Exploring the Data
 
 ## Question 1: Which region of the word have the highest rate of alcohol-related deaths among man aged 40-44 in 2019?
+
+To solve this problem, we need to filter out the data, reversely sort the data by value and pick the first one.
 
 ```{r P1Q1}
 # Get all data satisfying the criteria
@@ -83,56 +85,66 @@ sub_use_arranged <- arrange(sub_use40_44, desc(val))
 sub_use_arranged[1,"location"]
 ```
 
+From above we can know that the "Europe & Central Asia - WB" region of the world has the highest rate of alcohol-related deaths among man aged 40-44 in 2019
+
 ## Question 2: Looking at the prevalence of alcohol-related disease in the East Asia and Pacific region, how has this changed over time and in the different age groups? Is there a difference between men and women?
+
+A plot is needed for this question.
 
 ```{r P1Q2}
 sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
                              sub_use$location == "East Asia & Pacific - WB" &
                              sub_use$cause == "Alcohol use disorders",]
 
-g <- ggplot(sub_use_alcohol) +
-  geom_point(aes(x = year, y = val, color = age, shape = sex), show.legend = TRUE) +
+g <- ggplot(sub_use_alcohol,aes(x = year, y = val, color = age, shape = sex)) +
+  geom_point(show.legend = TRUE) +
+  geom_line(show.legend = TRUE) +
   facet_grid(. ~ sex) +
   labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
   x = "Year", y = "Prevalence")
 g
 ```
 
-TODO: How it is changed
+From the graph, we can know that:
 
-To determine whether there's a difference between man and woman, we would like to perform a statistical test.
+* For males, the prevalence of alcohol-related disease in the East Asia and Pacific region rises from 1990 to 1995, and decreases to 2005, and then rise again non-stop for those who aged 25 to 54. For those who are 55 to 69, they reached to peak in about 2017 and decreases afterwards.
+* Comparing to males, there are no significant changes in females.
 
-* Null hypothesis (H0): There is no difference between male and female.
-* Alternative hypothesis (H1): There is a difference between male and female.
-
-Firstly, let's determine whether the data of amn and woman is normally distributed:
+To determine whether there is a difference between man and woman, we plot a violin plot as statistical tests are explicitly announced to be unnecessary.
 
 ```{r}
-sub_use_alcohol_M <- sub_use_alcohol[sub_use_alcohol$sex == "Male", ]
-sub_use_alcohol_F <- sub_use_alcohol[sub_use_alcohol$sex != "Male", ]
-shapiro.test(sub_use_alcohol_M$val)
-shapiro.test(sub_use_alcohol_F$val)
+g <- ggplot(sub_use_alcohol) +
+  geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
+  labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
+  x = "Gender", y = "Prevalence")
+g
 ```
 
-From the Shapiro-Wilk normality test, we may discover that the data of male and female is not normally distributed. So we will use a Wilcoxon rank sum test.
-
-```{r}
-wilcox.test(sub_use_alcohol_M$val,sub_use_alcohol_F$val)
-```
-
-From the test we can conclude that the alternative hypothesis is true. That is, there is a difference between male and female.
+From this violin plot, we can conclude that there is a difference between male and female. Female is significantly lower than male.
 
 ## Looking at the data from the United States, can you confirm an increase in the prevalence of diseases related to opioid use? What age group is the most affected?
+
+The remaining part of the description is:
+
+> In the United States, there is talk of an "Opioid epidemic". Part of the problem is that since the late 1990s, doctors have increasingly been prescribing pain killers which can be highly addictive.
+
+Firstly we need to plot how is the prevalence of diseases is related to opioid use.
 
 ```{r P1Q3}
 sub_use_Opioid <- sub_use[sub_use$measure == "Deaths" &
                             sub_use$location == "North America" &
                             sub_use$cause == "Opioid use disorders",]
 
-G <- ggplot(sub_use_Opioid) +
-  geom_point(aes(x = year, y = val, color = age, shape = sex), show.legend = TRUE) +
+g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
+  geom_point(show.legend = TRUE) +
+  geom_line(show.legend = TRUE) +
+  labs(title = "Prevalence of opioid-related disease in the United States",
+  x = "Year", y = "Prevalence") +
   facet_grid(. ~ sex)
-G
-
+g
 ```
+
+So, from the graph, it is clear that an increase in the prevalence of diseases related to opioid use can be confirmed. Males aging from 25-29 are mostly affected.
+
+# Part 2: Ask your own Question
 

@@ -5,4 +5,4 @@ eng_text<-function (options){
 }
 
 knit_engines$set(text=eng_text)
-render("Main.rmd",output_format="all")
+render("Main.Rmd",output_format="all")
