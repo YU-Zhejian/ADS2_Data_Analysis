@@ -184,6 +184,13 @@ test.location <- unique(as.character(test.label))
 # Training the model
 m <- C5.0(train.data, train.label, trials = 100)
 
+#Print the usage attribute
+attributeUsage<-strsplit(m$output,"Attribute usage")[[1]][2]
+rm(m)
+cat(attributeUsage)
+
+
+
 # Predicting
 pred <- predict(m, test.data, type = "class")
 
@@ -220,6 +227,7 @@ rm(test.data)
 rm(test.label)
 rm(test.location)
 rm(m)
+rm(attributeUsage)
 rm(pred)
 rm(df)
 rm(i)
