@@ -81,10 +81,10 @@ To solve this problem, we need to filter out the data, reversely sort the data b
 ```{r P1Q1}
 # Get all data satisfying the criteria
 sub_use40_44 <- sub_use[sub_use$year == 2019 &
-                                sub_use$sex == "Male" &
-                                sub_use$cause == "Alcohol use disorders" &
-                                sub_use$age == "40 to 44" &
-                                sub_use$measure == "Deaths",]
+                          sub_use$sex == "Male" &
+                          sub_use$cause == "Alcohol use disorders" &
+                          sub_use$age == "40 to 44" &
+                          sub_use$measure == "Deaths",]
 # Sort the result by val in reverse order
 sub_use_arranged <- arrange(sub_use40_44, desc(val))
 # Pick the highest one and get its location
@@ -101,16 +101,16 @@ A plot is needed for this question.
 
 ```{r P1Q2.1}
 sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
-                                   sub_use$location == "East Asia & Pacific - WB" &
-                                   sub_use$cause == "Alcohol use disorders",]
+                             sub_use$location == "East Asia & Pacific - WB" &
+                             sub_use$cause == "Alcohol use disorders",]
 
 g <- ggplot(sub_use_alcohol, aes(x = year, y = val, color = age, shape = sex)) +
-        geom_point(show.legend = TRUE) +
-        geom_line(show.legend = TRUE) +
-        facet_grid(. ~ sex) +
-        labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
-             x = "Year", y = "Prevalence") +
-        scale_color_viridis(discrete = T)
+  geom_point(show.legend = TRUE) +
+  geom_line(show.legend = TRUE) +
+  facet_grid(. ~ sex) +
+  labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
+       x = "Year", y = "Prevalence") +
+  scale_color_viridis(discrete = T)
 g
 ```
 
@@ -123,10 +123,10 @@ To determine whether there is a difference between man and woman, we plot a viol
 
 ```{r P1Q2.2}
 g <- ggplot(sub_use_alcohol) +
-        geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
-        labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
-             x = "Gender", y = "Prevalence") +
-        scale_fill_manual(values = c("#E69F00", "#56B4E9"))
+  geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
+  labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
+       x = "Gender", y = "Prevalence") +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9"))
 g
 rm(sub_use_alcohol)
 rm(g)
@@ -144,16 +144,16 @@ Firstly we need to plot how is the prevalence of diseases is related to opioid u
 
 ```{r P1Q3}
 sub_use_Opioid <- sub_use[sub_use$measure == "Deaths" &
-                                  sub_use$location == "North America" &
-                                  sub_use$cause == "Opioid use disorders",]
+                            sub_use$location == "North America" &
+                            sub_use$cause == "Opioid use disorders",]
 
 g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
-        geom_point(show.legend = TRUE) +
-        geom_line(show.legend = TRUE) +
-        labs(title = "Prevalence of opioid-related disease in the United States",
-             x = "Year", y = "Prevalence") +
-        facet_grid(. ~ sex) +
-        scale_color_viridis(discrete = T)
+  geom_point(show.legend = TRUE) +
+  geom_line(show.legend = TRUE) +
+  labs(title = "Prevalence of opioid-related disease in the United States",
+       x = "Year", y = "Prevalence") +
+  facet_grid(. ~ sex) +
+  scale_color_viridis(discrete = T)
 g
 rm(sub_use_Opioid)
 rm(g)
@@ -163,15 +163,9 @@ So, from the graph, it is clear that an increase in the prevalence of diseases r
 
 # Part 2: Ask your own Question
 
-In this part, we will build a classification tree model using C5.0 algorithm provided by R package `C50`.
+In this part, we will build a classification tree model using C5.0 algorithm provided by R package `C50`. The following part reveals the training process, and the question we ask will be stated below.
 
-## Question 4: Which factor have the greatest impact on death rate?
-
-## Question 5: Try to predict TODO?
-
-## Draft
-
-```{r draft}
+```{r Training}
 sub_use_rand <- sub_use[order(runif(15000)),]
 train <- slice_head(sub_use_rand, n = 15000 / 2)
 train.data <- select(train, !(location))
@@ -184,18 +178,42 @@ test.location <- unique(as.character(test.label))
 # Training the model
 m <- C5.0(train.data, train.label, trials = 100)
 
+rm(sub_use_rand)
+rm(train)
+rm(train.data)
+rm(train.label)
+rm(test)
+```
+
+The following table shows factors that do matter in this module.
+
+```{r Factors}
 #Print the usage attribute
-attributeUsage<-strsplit(m$output,"Attribute usage")[[1]][2]
-rm(m)
+attributeUsage <- strsplit(m$output, "Attribute usage")[[1]][2]
 cat(attributeUsage)
+rm(attributeUsage)
+```
 
+The following graph shows the error rate, from which we can know that this model is over-fitting.
 
+```{r Error Rate}
+err <- m$boostResults
+ggscatter(err, x = "Trial", y = "Percent", add = "reg.line",
+          add.params = list(color = "blue", fill = "lightgray"), conf.int = TRUE) +
+  geom_line()
+rm(err)
+```
 
-# Predicting
+The following piece of code performs the prediction.
+
+```{r Prediction}
 pred <- predict(m, test.data, type = "class")
+rm(test.data)
+```
 
+The following graph shows the confusion matrix, both unnormalized and normalized with Log-Normalize.
 
-# Plot confusion matrix
+```{r Confusion Matrix}
 pred <- as.character(pred)
 test.label <- as.character(test.label)
 df <- as.data.frame(matrix(0,
@@ -209,28 +227,34 @@ for (i in seq(1, length(pred))) {
 pheatmap(df, cluster_cols = FALSE, cluster_rows = FALSE,
          display_numbers = TRUE)
 # log normalize
-pheatmap(log10(df+1), cluster_cols = FALSE, cluster_rows = FALSE, 
+pheatmap(log10(df + 1), cluster_cols = FALSE, cluster_rows = FALSE,
          display_numbers = TRUE)
-
-# Error plot
-err <- m$boostResults
-ggscatter(err, x="Trial", y="Percent", add = "reg.line", add.params = list(color = "blue", fill = "lightgray"),
-          conf.int = TRUE) + geom_line()
-# Overfitting
-
-rm(sub_use_rand)
-rm(train)
-rm(train.data)
-rm(train.label)
-rm(test)
-rm(test.data)
-rm(test.label)
-rm(test.location)
-rm(m)
-rm(attributeUsage)
-rm(pred)
 rm(df)
 rm(i)
-rm(err)
+rm(test.label)
+rm(test.location)
 ```
 
+## Question 4: TODO
+
+# Cleaning Up
+
+```{r Cleaning Up}
+rm(m)
+rm(pred)
+rm(sub_use)
+```
+
+# Supplementary Code
+
+This RMarkdown should be compiled with following code:
+
+```{r Compile, eval = FALSE}
+library(rmarkdown)
+library(knitr)
+eng_text <- function(options) {
+  engine_output(options, code = options$code, out = "")
+}
+knit_engines$set(text = eng_text)
+render("Main.Rmd", output_format = "all")
+```
