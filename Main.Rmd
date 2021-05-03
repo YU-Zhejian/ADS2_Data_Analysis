@@ -37,6 +37,7 @@ rm(installed)
 rm(packages)
 # Source global packages
 library(tidyverse)
+library(C50)
 library(ggpubr)
 library(viridis)
 library(pheatmap)
@@ -179,19 +180,15 @@ test <- slice_tail(sub_use_rand, n = 15000 / 2)
 test.data <- select(test, !(location))
 test.label <- test$location
 test.location <- unique(as.character(test.label))
-rm(sub_use_rand)
-rm(test)
-rm(train)
-# Training the model
-m <- C5.0(train.data, train.label, trials = 10)
-rm(train.data)
-rm(train.label)
-pred <- predict(m, test.data, type = "class")
-rm(test.data)
-rm(m)
 
-# Print comfusion matrix
-# CrossTable(pred,test.label,prop.r = F,prop.t = F,prop.chisq = F)
+# Training the model
+m <- C5.0(train.data, train.label, trials = 100)
+
+# Predicting
+pred <- predict(m, test.data, type = "class")
+
+
+# Plot confusion matrix
 pred <- as.character(pred)
 test.label <- as.character(test.label)
 df <- as.data.frame(matrix(0,
@@ -202,12 +199,30 @@ names(df) <- test.location
 for (i in seq(1, length(pred))) {
   df[pred[i], test.label[i]] <- df[pred[i], test.label[i]] + 1
 }
-pheatmap(df, cluster_cols = FALSE, cluster_rows = FALSE)
+pheatmap(df, cluster_cols = FALSE, cluster_rows = FALSE,
+         display_numbers = TRUE)
+# log normalize
+pheatmap(log10(df+1), cluster_cols = FALSE, cluster_rows = FALSE, 
+         display_numbers = TRUE)
 
-rm(pred)
+# Error plot
+err <- m$boostResults
+ggscatter(err, x="Trial", y="Percent", add = "reg.line", add.params = list(color = "blue", fill = "lightgray"),
+          conf.int = TRUE) + geom_line()
+# Overfitting
+
+rm(sub_use_rand)
+rm(train)
+rm(train.data)
+rm(train.label)
+rm(test)
+rm(test.data)
 rm(test.label)
 rm(test.location)
+rm(m)
+rm(pred)
 rm(df)
 rm(i)
+rm(err)
 ```
 

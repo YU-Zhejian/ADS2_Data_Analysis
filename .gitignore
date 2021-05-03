@@ -3,3 +3,5 @@
 /headrs.yaml
 /substance_use.csv
 *.pdf
+/.RData
+/.Rhistory
