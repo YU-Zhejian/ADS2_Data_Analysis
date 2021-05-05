@@ -27,7 +27,13 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(cache = TRUE)
 # Check whether the dependencies are met
 installed <- installed.packages()[, 1]
-required <- c("tidyverse", "ggubr", "knitr", "rmarkdown", "stringr", "viridis", "C50", "pheatmap")
+required <- c("tidyverse", "ggubr",
+              "knitr", "rmarkdown",
+              "stringr", "viridis",
+              "C50", "pheatmap",
+              "RWeka", "rpart",
+              "rpart.plot", "RSNNS",
+              "Rcpp", "neuralnet")
 for (packages in required) {
   if (!packages %in% installed) {
     simpleError(paste0("Package ", packages, " not installed."))
@@ -41,6 +47,12 @@ library(C50)
 library(ggpubr)
 library(viridis)
 library(pheatmap)
+library(rpart)
+library(RWeka)
+library(rpart.plot)
+library(RSNNS)
+library(Rcpp)
+library(neuralnet)
 ```
 
 # Data Cleaning
@@ -81,10 +93,10 @@ To solve this problem, we need to filter out the data, reversely sort the data b
 ```{r P1Q1}
 # Get all data satisfying the criteria
 sub_use40_44 <- sub_use[sub_use$year == 2019 &
-                          sub_use$sex == "Male" &
-                          sub_use$cause == "Alcohol use disorders" &
-                          sub_use$age == "40 to 44" &
-                          sub_use$measure == "Deaths",]
+                                sub_use$sex == "Male" &
+                                sub_use$cause == "Alcohol use disorders" &
+                                sub_use$age == "40 to 44" &
+                                sub_use$measure == "Deaths",]
 # Sort the result by val in reverse order
 sub_use_arranged <- arrange(sub_use40_44, desc(val))
 # Pick the highest one and get its location
@@ -101,17 +113,16 @@ A plot is needed for this question.
 
 ```{r P1Q2.1}
 sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
-                             sub_use$location == "East Asia & Pacific - WB" &
-                             sub_use$cause == "Alcohol use disorders",]
+                                   sub_use$location == "East Asia & Pacific - WB" &
+                                   sub_use$cause == "Alcohol use disorders",]
 
-g <- ggplot(sub_use_alcohol, aes(x = year, y = val, color = age, shape = sex)) +
-  geom_point(show.legend = TRUE) +
-  geom_line(show.legend = TRUE) +
-  facet_grid(. ~ sex) +
-  labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
-       x = "Year", y = "Prevalence") +
-  scale_color_viridis(discrete = T)
-g
+ggplot(sub_use_alcohol, aes(x = year, y = val, color = age, shape = sex)) +
+        geom_point(show.legend = TRUE) +
+        geom_line(show.legend = TRUE) +
+        facet_grid(. ~ sex) +
+        labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
+             x = "Year", y = "Prevalence") +
+        scale_color_viridis(discrete = T)
 ```
 
 From the graph, we can know that:
@@ -122,14 +133,12 @@ From the graph, we can know that:
 To determine whether there is a difference between man and woman, we plot a violin plot as statistical tests are explicitly announced to be unnecessary.
 
 ```{r P1Q2.2}
-g <- ggplot(sub_use_alcohol) +
-  geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
-  labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
-       x = "Gender", y = "Prevalence") +
-  scale_fill_manual(values = c("#E69F00", "#56B4E9"))
-g
+ggplot(sub_use_alcohol) +
+        geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
+        labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
+             x = "Gender", y = "Prevalence") +
+        scale_fill_manual(values = c("#E69F00", "#56B4E9"))
 rm(sub_use_alcohol)
-rm(g)
 ```
 
 From this violin plot, we can conclude that there is a difference between male and female. Female is significantly lower than male.
@@ -144,19 +153,18 @@ Firstly we need to plot how is the prevalence of diseases is related to opioid u
 
 ```{r P1Q3}
 sub_use_Opioid <- sub_use[sub_use$measure == "Deaths" &
-                            sub_use$location == "North America" &
-                            sub_use$cause == "Opioid use disorders",]
+                                  sub_use$location == "North America" &
+                                  sub_use$cause == "Opioid use disorders",]
 
-g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
-  geom_point(show.legend = TRUE) +
-  geom_line(show.legend = TRUE) +
-  labs(title = "Prevalence of opioid-related disease in the United States",
-       x = "Year", y = "Prevalence") +
-  facet_grid(. ~ sex) +
-  scale_color_viridis(discrete = T)
-g
+ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
+        geom_point(show.legend = TRUE) +
+        geom_line(show.legend = TRUE) +
+        labs(title = "Prevalence of opioid-related disease in the United States",
+             x = "Year", y = "Prevalence") +
+        facet_grid(. ~ sex) +
+        scale_color_viridis(discrete = T)
+
 rm(sub_use_Opioid)
-rm(g)
 ```
 
 So, from the graph, it is clear that an increase in the prevalence of diseases related to opioid use can be confirmed. Males aging from 25-29 are mostly affected.
@@ -200,7 +208,7 @@ The following graph shows the error rate, from which we can know that this model
 err <- m$boostResults
 ggscatter(err, x = "Trial", y = "Percent", add = "reg.line",
           add.params = list(color = "blue", fill = "lightgray"), conf.int = TRUE) +
-  geom_line()
+        geom_line()
 rm(err)
 ```
 
@@ -242,7 +250,6 @@ rm(test.location)
 ```{r Cleaning Up}
 rm(m)
 rm(pred)
-rm(sub_use)
 ```
 
 # Supplementary Code
@@ -257,4 +264,75 @@ eng_text <- function(options) {
 }
 knit_engines$set(text = eng_text)
 render("Main.Rmd", output_format = "all")
+```
+
+
+```{r FAILED IDEA}
+for (col_name in names(sub_use)) {
+  if (class(sub_use[[col_name]]) == "factor") {
+    sub_use[[col_name]] <- as.character(sub_use[[col_name]])
+  }
+}
+
+# Make permanant changes
+for (location in unique(sub_use$location)) {
+  sub_location <- gsub("[ &-]", "_", location)
+  execstr <- paste0('sub_use <- mutate(sub_use, is_',
+                    sub_location,
+                    ' = (sub_use$location == "', location, '") )')
+  eval(parse(text = execstr))
+}
+sub_use <- select(sub_use, !(location))
+sub_use$sex <- (sub_use$sex == "Male")
+sub_use$measure <- (sub_use$measure == "Deaths")
+sub_use$cause <- (sub_use$cause == "Alcohol use disorders")
+sub_age <- unique(sub_use$age)
+sub_use$age <- as.numeric(as.factor(sub_use$age))
+for (col_name in names(sub_use)) {
+  if (class(sub_use[[col_name]]) == "logical") {
+    sub_use[[col_name]] <- as.numeric(sub_use[[col_name]])
+  }
+}
+
+
+sub_use_rand <- sub_use[order(runif(15000)),]
+train <- slice_head(sub_use_rand, n = 15000 / 2)
+train.data <- select(train, !(val))
+train.label <- train$val
+test <- slice_tail(sub_use_rand, n = 15000 / 2)
+test.data <- select(test, !(val))
+test.label <- test$val
+
+train <- dplyr::filter(sub_use, measure == 1, sex == 1,
+                       age == 2, cause == 1, is_North_America == 1)
+
+
+# rpart
+m_rpart <- rpart(val ~ year, data = train)
+m_m5p <- M5P(val ~ year, data = train)
+m <- neuralnet(val ~ year, data = train, hidden = 10, threshold = 0.01)
+summary(m)
+plot(m)
+predict_data <- data.frame()
+predict_data_slice <- train[1,]
+predict_data_slice$val <- 0
+for (year in c(2020:2050)) {
+  predict_data_slice$year <- year
+  predict_data <- rbind(predict_data, predict_data_slice)
+}
+
+predict_data$val_neuralnet <- compute(m, predict_data)$net.result[, 1]
+predict_data$val_rpart <- predict(m_rpart, predict_data)
+predict_data$val_m5p <- predict(m_m5p, predict_data)
+
+train$val_neuralnet <- train$val
+train$val_rpart <- train$val
+train$val_m5p <- train$val
+plot_ds <- rbind(train, predict_data)
+ggplot(plot_ds, aes(x = year)) +
+        geom_point(aes(y = val), show.legend = TRUE) +
+        geom_line(aes(y = val_neuralnet), show.legend = TRUE) +
+        geom_line(aes(y = val_rpart), show.legend = TRUE) +
+        geom_line(aes(y = val_m5p), show.legend = TRUE) +
+        scale_color_viridis(discrete = T)
 ```
