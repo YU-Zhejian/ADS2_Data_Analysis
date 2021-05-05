@@ -76,7 +76,7 @@ It is clear that there is no `NA` inside.
 
 ## Question 1: Which region of the word have the highest rate of alcohol-related deaths among man aged 40-44 in 2019?
 
-To solve this problem, we need to filter out the data, reversely sort the data by value and pick the first one.
+From the question, we can conclude that the data group required is the men between the ages of 40 and 44 who died of alcohol use disorder in 2019. We get all data satisfying the criteria and then sort the data by val in reverse order. Here "val" refers to death rate. The data with the highest death rate is placed at the top. We pick the highest one and get its location.
 
 ```{r P1Q1}
 # Get all data satisfying the criteria
@@ -93,11 +93,11 @@ rm(sub_use40_44)
 rm(sub_use_arranged)
 ```
 
-From above we can know that the "Europe & Central Asia - WB" region of the world has the highest rate of alcohol-related deaths among man aged 40-44 in 2019
+We conclude that Europe and Central Asia -WB have the highest rate of alcohol-related deaths among man aged 40-44 in 2019.
 
 ## Question 2: Looking at the prevalence of alcohol-related disease in the East Asia and Pacific region, how has this changed over time and in the different age groups? Is there a difference between men and women?
 
-A plot is needed for this question.
+From the question, we get the criteria that measure equals to "prevalence", location equals to "East Asia" or "Pacific -WB" and cause equals to "Alcohol use disorders". We get all data satisfying the criteria. We use ggplot function to plot scatter plots of the data. X-axis displays the "year" and Y-axis displays the "val". Age and sex are distinguished by color and shape. We facet the plot according to sex so that we can clearly see the difference between male and female. 
 
 ```{r P1Q2.1}
 sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
@@ -140,7 +140,7 @@ The remaining part of the description is:
 
 > In the United States, there is talk of an "Opioid epidemic". Part of the problem is that since the late 1990s, doctors have increasingly been prescribing pain killers which can be highly addictive.
 
-Firstly we need to plot how is the prevalence of diseases is related to opioid use.
+From the question, we get the criteria that measure equals to "Death", location equals to "North America" and cause equals to "Opioid use disorders". We get all data satisfying the criteria. We use ggplot function to plot scatter plots of the data. X-axis displays the "year" and Y-axis displays the "val". Age is distinguished by color. We facet the plot according to sex so that we can clearly see the difference between male and female. 
 
 ```{r P1Q3}
 sub_use_Opioid <- sub_use[sub_use$measure == "Deaths" &
@@ -159,7 +159,7 @@ rm(sub_use_Opioid)
 rm(g)
 ```
 
-So, from the graph, it is clear that an increase in the prevalence of diseases related to opioid use can be confirmed. Males aging from 25-29 are mostly affected.
+From the plot, we can confirm an increase in the prevalence of diseases related to opioid use. Both men and women in 25-29 age group are the most affected.
 
 # Part 2: Ask your own Question
 
