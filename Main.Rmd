@@ -9,6 +9,7 @@ output:
     toc_depth: 5
     keep_tex: yes
     latex_engine: pdflatex
+    df_print: tibble
 geometry: inner=0.5in,outer=0.5in
 ---
 
@@ -17,7 +18,7 @@ geometry: inner=0.5in,outer=0.5in
 
 Locating global libraries.
 
-```{r global libraries}
+```{r Global libraries}
 # Remove cached variables
 rm(list = ls())
 # Knitr Options
@@ -26,30 +27,34 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(cache = TRUE)
 # Check whether the dependencies are met
 installed <- installed.packages()[, 1]
-for (packages in c("tidyverse", "ggubr", "knitr", "rmarkdown", "stringr")) {
+required <- c("tidyverse", "ggubr", "knitr", "rmarkdown", "stringr", "viridis", "C50", "pheatmap")
+for (packages in required) {
   if (!packages %in% installed) {
     simpleError(paste0("Package ", packages, " not installed."))
   }
 }
+rm(installed)
+rm(packages)
 # Source global packages
 library(tidyverse)
+library(C50)
 library(ggpubr)
 library(viridis)
+library(pheatmap)
 ```
 
 # Data Cleaning
 
 ```{r Read Data}
 if (!file.exists("substance_use.csv")) simpleError(paste0("File substance_use.csv not exist!"))
-# TODO: Download the file if not exist.
-sub_use <- read.csv("substance_use.csv")
+sub_use <- read.csv("substance_use.csv", stringsAsFactors = TRUE)
 ```
 
 Use `head` and `summary` to explore data.
 
 ```{r Summary}
 summary(sub_use)
-slice_head(sub_use,n=3)
+slice_head(sub_use, n = 3)
 ```
 
 We discovered that there is only `"Percent"` in the `metric` column. This column is therefore removed.
@@ -83,7 +88,9 @@ sub_use40_44 <- sub_use[sub_use$year == 2019 &
 # Sort the result by val in reverse order
 sub_use_arranged <- arrange(sub_use40_44, desc(val))
 # Pick the highest one and get its location
-sub_use_arranged[1,"location"]
+sub_use_arranged[1, "location"]
+rm(sub_use40_44)
+rm(sub_use_arranged)
 ```
 
 From above we can know that the "Europe & Central Asia - WB" region of the world has the highest rate of alcohol-related deaths among man aged 40-44 in 2019
@@ -92,17 +99,17 @@ From above we can know that the "Europe & Central Asia - WB" region of the world
 
 A plot is needed for this question.
 
-```{r P1Q2}
+```{r P1Q2.1}
 sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
                              sub_use$location == "East Asia & Pacific - WB" &
                              sub_use$cause == "Alcohol use disorders",]
 
-g <- ggplot(sub_use_alcohol,aes(x = year, y = val, color = age, shape = sex)) +
+g <- ggplot(sub_use_alcohol, aes(x = year, y = val, color = age, shape = sex)) +
   geom_point(show.legend = TRUE) +
   geom_line(show.legend = TRUE) +
   facet_grid(. ~ sex) +
   labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
-  x = "Year", y = "Prevalence")+ 
+       x = "Year", y = "Prevalence") +
   scale_color_viridis(discrete = T)
 g
 ```
@@ -114,18 +121,20 @@ From the graph, we can know that:
 
 To determine whether there is a difference between man and woman, we plot a violin plot as statistical tests are explicitly announced to be unnecessary.
 
-```{r}
+```{r P1Q2.2}
 g <- ggplot(sub_use_alcohol) +
   geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
   labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
-  x = "Gender", y = "Prevalence")+
-  scale_fill_manual(values=c("#E69F00", "#56B4E9"))
+       x = "Gender", y = "Prevalence") +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9"))
 g
+rm(sub_use_alcohol)
+rm(g)
 ```
 
 From this violin plot, we can conclude that there is a difference between male and female. Female is significantly lower than male.
 
-## Looking at the data from the United States, can you confirm an increase in the prevalence of diseases related to opioid use? What age group is the most affected?
+## Question 3: Looking at the data from the United States, can you confirm an increase in the prevalence of diseases related to opioid use? What age group is the most affected?
 
 The remaining part of the description is:
 
@@ -142,13 +151,110 @@ g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
   geom_point(show.legend = TRUE) +
   geom_line(show.legend = TRUE) +
   labs(title = "Prevalence of opioid-related disease in the United States",
-  x = "Year", y = "Prevalence") +
-  facet_grid(. ~ sex)+ 
+       x = "Year", y = "Prevalence") +
+  facet_grid(. ~ sex) +
   scale_color_viridis(discrete = T)
 g
+rm(sub_use_Opioid)
+rm(g)
 ```
 
 So, from the graph, it is clear that an increase in the prevalence of diseases related to opioid use can be confirmed. Males aging from 25-29 are mostly affected.
 
 # Part 2: Ask your own Question
 
+In this part, we will build a classification tree model using C5.0 algorithm provided by R package `C50`. The following part reveals the training process, and the question we ask will be stated below.
+
+```{r Training}
+sub_use_rand <- sub_use[order(runif(15000)),]
+train <- slice_head(sub_use_rand, n = 15000 / 2)
+train.data <- select(train, !(location))
+train.label <- train$location
+test <- slice_tail(sub_use_rand, n = 15000 / 2)
+test.data <- select(test, !(location))
+test.label <- test$location
+test.location <- unique(as.character(test.label))
+
+# Training the model
+m <- C5.0(train.data, train.label, trials = 100)
+
+rm(sub_use_rand)
+rm(train)
+rm(train.data)
+rm(train.label)
+rm(test)
+```
+
+The following table shows factors that do matter in this module.
+
+```{r Factors}
+#Print the usage attribute
+attributeUsage <- strsplit(m$output, "Attribute usage")[[1]][2]
+cat(attributeUsage)
+rm(attributeUsage)
+```
+
+The following graph shows the error rate, from which we can know that this model is over-fitting.
+
+```{r Error Rate}
+err <- m$boostResults
+ggscatter(err, x = "Trial", y = "Percent", add = "reg.line",
+          add.params = list(color = "blue", fill = "lightgray"), conf.int = TRUE) +
+  geom_line()
+rm(err)
+```
+
+The following piece of code performs the prediction.
+
+```{r Prediction}
+pred <- predict(m, test.data, type = "class")
+rm(test.data)
+```
+
+The following graph shows the confusion matrix, both unnormalized and normalized with Log-Normalize.
+
+```{r Confusion Matrix}
+pred <- as.character(pred)
+test.label <- as.character(test.label)
+df <- as.data.frame(matrix(0,
+                           nrow = length(test.location),
+                           ncol = length(test.location)),
+                    row.names = test.location)
+names(df) <- test.location
+for (i in seq(1, length(pred))) {
+  df[pred[i], test.label[i]] <- df[pred[i], test.label[i]] + 1
+}
+pheatmap(df, cluster_cols = FALSE, cluster_rows = FALSE,
+         display_numbers = TRUE)
+# log normalize
+pheatmap(log10(df + 1), cluster_cols = FALSE, cluster_rows = FALSE,
+         display_numbers = TRUE)
+rm(df)
+rm(i)
+rm(test.label)
+rm(test.location)
+```
+
+## Question 4: TODO
+
+# Cleaning Up
+
+```{r Cleaning Up}
+rm(m)
+rm(pred)
+rm(sub_use)
+```
+
+# Supplementary Code
+
+This RMarkdown should be compiled with following code:
+
+```{r Compile, eval = FALSE}
+library(rmarkdown)
+library(knitr)
+eng_text <- function(options) {
+  engine_output(options, code = options$code, out = "")
+}
+knit_engines$set(text = eng_text)
+render("Main.Rmd", output_format = "all")
+```
