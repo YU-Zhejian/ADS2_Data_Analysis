@@ -5,3 +5,6 @@
 *.pdf
 /.RData
 /.Rhistory
+*.html
+*.htm
+*.docx

@@ -6,7 +6,7 @@ output:
   html_document:
     df_print: paged
     toc: yes
-    toc_depth: '5'
+    toc_depth: 5
   pdf_document:
     df_print: tibble
     keep_tex: yes
@@ -16,10 +16,9 @@ output:
     toc_depth: 5
   word_document:
     toc: yes
-    toc_depth: '5'
+    toc_depth: 5
 geometry: inner=0.5in,outer=0.5in
 ---
-
 
 # Global Libraries
 
@@ -31,7 +30,6 @@ rm(list = ls())
 # Knitr Options
 knitr::opts_chunk$set(cache = TRUE)
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(cache = TRUE)
 # Check whether the dependencies are met
 installed <- installed.packages()[, 1]
 required <- c("tidyverse", "ggubr", "knitr", "rmarkdown", "stringr", "viridis", "C50", "pheatmap")
@@ -42,6 +40,7 @@ for (packages in required) {
 }
 rm(installed)
 rm(packages)
+rm(required)
 # Source global packages
 library(tidyverse)
 library(C50)
@@ -57,14 +56,14 @@ if (!file.exists("substance_use.csv")) simpleError(paste0("File substance_use.cs
 sub_use <- read.csv("substance_use.csv", stringsAsFactors = TRUE)
 ```
 
-Use `head` and `summary` to explore data.
+Use `slice_head` and `summary` to explore data.
 
 ```{r Summary}
 summary(sub_use)
 slice_head(sub_use, n = 3)
 ```
 
-We discovered that there is only `"Percent"` in the `metric` column. This column is therefore removed.
+We discovered that there is only `Percent` in the `metric` column. This column is therefore removed.
 
 ```{r Remove metric}
 summary(factor(sub_use$metric))
@@ -83,15 +82,15 @@ It is clear that there is no `NA` inside.
 
 ## Question 1: Which region of the world has the highest rate of alcohol-related deaths among men aged 40-44 in 2019?
 
-From the question, we can conclude that the data group required is the men between the ages of 40 and 44 who died of alcohol use disorder in 2019. We get all data satisfying the criteria and then sort the data by val in reverse order. Here "val" refers to the death rate. The data with the highest death rate is placed at the top. We pick the highest one and get its location.
+From the question, we can conclude that the data group required is the men between the ages of 40 and 44 who died of alcohol use disorder in 2019. We get all data satisfying the criteria and then sort the data by `val` in reverse order. Here `val` refers to the death rate. The data with the highest death rate is placed at the top. We pick the highest one and get its location.
 
 ```{r P1Q1}
 # Get all data satisfying the criteria
 sub_use40_44 <- sub_use[sub_use$year == 2019 &
-                          sub_use$sex == "Male" &
-                          sub_use$cause == "Alcohol use disorders" &
-                          sub_use$age == "40 to 44" &
-                          sub_use$measure == "Deaths",]
+                                sub_use$sex == "Male" &
+                                sub_use$cause == "Alcohol use disorders" &
+                                sub_use$age == "40 to 44" &
+                                sub_use$measure == "Deaths",]
 # Sort the result by val in reverse order
 sub_use_arranged <- arrange(sub_use40_44, desc(val))
 # Pick the highest one and get its location
@@ -100,25 +99,25 @@ rm(sub_use40_44)
 rm(sub_use_arranged)
 ```
 
-We conclude that Europe and Central Asia -WB have the highest rate of alcohol-related deaths among men aged 40-44 in 2019.
+We conclude that `Europe & Central Asia - WB` have the highest rate of alcohol-related deaths among men aged 40-44 in 2019.
 
 ## Question 2: Looking at the prevalence of alcohol-related disease in the East Asia and Pacific region, how has this changed over time and in the different age groups? Is there a difference between men and women?
 
-From the question, we get the criteria that measure equals to "prevalence", location equals to "East Asia" or "Pacific -WB" and cause equals to "Alcohol use disorders". We get all data satisfying the criteria. We use ggplot function to plot scatter plots of the data. X-axis displays the "year" and Y-axis displays the "val". Age and sex are distinguished by color and shape. We facet the plot according to sex so that we can clearly see the difference between male and female. 
+From the question, we get the criteria that `measure` equals to `Prevalence`, `location` equals to `East Asia & Pacific - WB` and `cause` equals to `Alcohol use disorders`. We get all data satisfying the criteria. We use `ggplot` to plot scatter plots of the data. X-axis displays the `year` and Y-axis displays the `val`. Age and sex are distinguished by color and shape. We facet the plot according to sex so that we can clearly see the difference between male and female.
 
 ```{r P1Q2.1}
 sub_use_alcohol <- sub_use[sub_use$measure == "Prevalence" &
-                             sub_use$location == "East Asia & Pacific - WB" &
-                             sub_use$cause == "Alcohol use disorders",]
+                                   sub_use$location == "East Asia & Pacific - WB" &
+                                   sub_use$cause == "Alcohol use disorders",]
 
 g <- ggplot(sub_use_alcohol, aes(x = year, y = val, color = age, shape = sex)) +
-  geom_point(show.legend = TRUE) +
-  geom_line(show.legend = TRUE) +
-  facet_grid(. ~ sex) +
-  labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
-       x = "Year", y = "Prevalence") +
-  scale_color_viridis(discrete = T)+
-  theme(panel.spacing.x = unit(1.2,"lines"))
+        geom_point(show.legend = TRUE) +
+        geom_line(show.legend = TRUE) +
+        facet_grid(. ~ sex) +
+        labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
+             x = "Year", y = "Prevalence") +
+        scale_color_viridis(discrete = T) +
+        theme(panel.spacing.x = unit(1.2, "lines"))
 g
 ```
 
@@ -131,10 +130,10 @@ To determine whether there is a difference between man and woman, we plot a viol
 
 ```{r P1Q2.2}
 g <- ggplot(sub_use_alcohol) +
-  geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
-  labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
-       x = "Gender", y = "Prevalence") +
-  scale_fill_manual(values = c("#E69F00", "#56B4E9"))
+        geom_violin(aes(x = sex, y = val, fill = sex), show.legend = TRUE) +
+        labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
+             x = "Gender", y = "Prevalence") +
+        scale_fill_manual(values = c("#E69F00", "#56B4E9"))
 g
 rm(sub_use_alcohol)
 rm(g)
@@ -148,21 +147,21 @@ The remaining part of the description is:
 
 > In the United States, there is talk of an "Opioid epidemic". Part of the problem is that since the late 1990s, doctors have increasingly been prescribing pain killers which can be highly addictive.
 
-From the question, we get the criteria that measure equals to "Prevalence", location equals to "North America" and cause equals to "Opioid use disorders". We get all data satisfying the criteria. We use ggplot function to plot scatter plots of the data. X-axis displays the "year" and Y-axis displays the "val". Age is distinguished by color. We facet the plot according to sex so that we can see the difference between male and female. 
+From the question, we get the criteria that `measure` equals to `Prevalence`, `location` equals to `North America` and `cause` equals to `Opioid use disorders`. We get all data satisfying the criteria. We use `ggplot` to plot scatter plots of the data. X-axis displays the `year` and Y-axis displays the `val`. Age is distinguished by color. We facet the plot according to sex so that we can see the difference between male and female.
 
 ```{r P1Q3}
 sub_use_Opioid <- sub_use[sub_use$measure == "Prevalence" &
-                            sub_use$location == "North America" &
-                            sub_use$cause == "Opioid use disorders",]
+                                  sub_use$location == "North America" &
+                                  sub_use$cause == "Opioid use disorders",]
 
 g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
-  geom_point(show.legend = TRUE) +
-  geom_line(show.legend = TRUE) +
-  labs(title = "Prevalence of opioid-related disease in the United States",
-       x = "Year", y = "Prevalence") +
-  facet_grid(. ~ sex) +
-  scale_color_viridis(discrete = T)+
-  theme(panel.spacing.x = unit(1.2,"lines"))
+        geom_point(show.legend = TRUE) +
+        geom_line(show.legend = TRUE) +
+        labs(title = "Prevalence of opioid-related disease in the United States",
+             x = "Year", y = "Prevalence") +
+        facet_grid(. ~ sex) +
+        scale_color_viridis(discrete = T) +
+        theme(panel.spacing.x = unit(1.2, "lines"))
 g
 rm(sub_use_Opioid)
 rm(g)
@@ -172,17 +171,18 @@ From the plot, we can confirm an increase in the prevalence of diseases related 
 
 # Part 2: Ask your own Question
 
-## Question 4: When we plot the "val" according to "year" we can find that there are some visible differences among locations. Therefore it leads to our own question: Are there any rules for distinguishing the locations by other attributes?
+## Question 4: Are there any rules for distinguishing the locations by other attributes?
+
+This question was raised when we plot the `val` according to `year`. We can find that there are some visible differences among locations.
 
 In this part, we will build a classification tree model using C5.0 algorithm provided by R package `C50`. The following part reveals the training process, and the question we ask will be stated below.
 
-
-First, let us take the opioid-related prevalence as an example. We use ggplot function to plot scatter plots of the prevalence value of Opioid use disorders and facet it according to sex and location. 
+First, let us take the opioid-related prevalence as an example. We use `ggplot` to plot scatter plots of the prevalence value of `Opioid use disorders` and facet it according to sex and location.
 
 ```{r,fig.width=8, fig.height=8}
 
 sub_use_Opioid <- sub_use[sub_use$measure == "Prevalence" &
-                                 sub_use$cause == "Opioid use disorders",]
+                                  sub_use$cause == "Opioid use disorders",]
 
 g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
         geom_point(show.legend = TRUE) +
@@ -190,13 +190,15 @@ g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
         labs(title = "Prevalence of opioid-related disease in all locations",
              x = "Year", y = "Prevalence") +
         #facet_grid(location ~ sex) +
-        scale_color_viridis(discrete = T)+
-  theme(panel.spacing.x = unit(1.2,"lines"))
-g<-facet(g,facet.by = c("location","sex"),panel.labs.font.y = list(angle=0),scales = "free")
+        scale_color_viridis(discrete = T) +
+        theme(panel.spacing.x = unit(1.2, "lines"))
+# The default facet function cannot satisfy our need
+# because the lable is veritical
+g <- facet(g, facet.by = c("location", "sex"), panel.labs.font.y = list(angle = 0), scales = "free")
 g
 ```
 
-As can be seen from the above figure, some visible differences can be seen among other regions. Therefore, we decided to explore whether the distinction between locations exist and the contribution of each factor (sex, age, cause, val, upper, lower, measure, year) to the region, that is, how much difference each data contributes.
+As can be seen from the above figure, some visible differences can be seen among other regions. Therefore, we decided to explore whether there is distinction between locations, and the contribution of each factor (`sex`, `age`, `cause`, `measure`, `year`, `val`) to the region, that is, how much difference each data contributes.
 
 ```{r Training}
 sub_use_rand <- sub_use[order(runif(15000)),]
@@ -222,11 +224,9 @@ The following table shows factors that do matter in this module.
 
 ```{r Factors}
 #Print the usage attribute
-attributeUsage <- strsplit(m$output, "Attribute usage")[[1]][2]
-attributeUsage<-paste("Attribute usage", attributeUsage,sep="")
-cat(attributeUsage)
-rm(attributeUsage)
+cat(paste0("Attribute usage", strsplit(m$output, "Attribute usage")[[1]][2]))
 ```
+
 From the table, we can see that age and cause have a greater impact on the region, followed by year and gender. The contribution of measurement indicators is the smallest, which is in line with our common sense.
 
 The following graph shows the error rate, from which we can know that this model is over-fitting.
@@ -235,7 +235,8 @@ The following graph shows the error rate, from which we can know that this model
 err <- m$boostResults
 ggscatter(err, x = "Trial", y = "Percent", add = "reg.line",
           add.params = list(color = "blue", fill = "lightgray"), conf.int = TRUE) +
-  geom_line()
+        geom_line() +
+        labs(title = "Relation between error rate and trials")
 rm(err)
 ```
 
@@ -246,7 +247,7 @@ pred <- predict(m, test.data, type = "class")
 rm(test.data)
 ```
 
-The following graph shows the confusion matrix, both unnormalized and normalized with Log-Normalize.
+The following graph shows the confusion matrix, both unnormalized and normalized with Log-Normalization.
 
 ```{r Confusion Matrix}
 pred <- as.character(pred)
@@ -260,26 +261,25 @@ for (i in seq(1, length(pred))) {
   df[pred[i], test.label[i]] <- df[pred[i], test.label[i]] + 1
 }
 pheatmap(df, cluster_cols = FALSE, cluster_rows = FALSE,
-         display_numbers = TRUE,angle_col = 315)
+         display_numbers = TRUE, angle_col = 315,
+         main = "Heatmap of confusion matrix")
 # log normalize
 pheatmap(log10(df + 1), cluster_cols = FALSE, cluster_rows = FALSE,
-         display_numbers = TRUE,angle_col = 315)
+         display_numbers = TRUE, angle_col = 315,
+         main = "Log-normalized heatmap of confusion matrix")
 rm(df)
 rm(i)
 rm(test.label)
 rm(test.location)
+rm(m)
+rm(pred)
 ```
 
 It can be found from the two heat maps that the predicted result is close to the actual result, which proves that our machine learning model is basically correct. Additionally, the existence of a practical decision tree can confirm the significant differences between locations.
 
-
-
 # Cleaning Up
 
-
 ```{r Cleaning Up}
-rm(m)
-rm(pred)
 rm(sub_use)
 ```
 
