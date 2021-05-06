@@ -3,13 +3,17 @@ title: "Report"
 author: "ADS2 Group 4"
 date: "`r Sys.time()`"
 output:
-  pdf_document:
+  html_document:
+    df_print: paged
     toc: yes
-    number_sections: yes
-    toc_depth: 5
+    toc_depth: '5'
+  pdf_document:
+    df_print: tibble
     keep_tex: yes
     latex_engine: pdflatex
-    df_print: tibble
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
 geometry: inner=0.5in,outer=0.5in
 ---
 
@@ -108,7 +112,7 @@ g <- ggplot(sub_use_alcohol, aes(x = year, y = val, color = age, shape = sex)) +
   geom_point(show.legend = TRUE) +
   geom_line(show.legend = TRUE) +
   facet_grid(. ~ sex) +
-  labs(title = "prevalence of alcohol-related disease in the East Asia and Pacific region",
+  labs(title = "Prevalence of alcohol-related disease in the East Asia and Pacific region",
        x = "Year", y = "Prevalence") +
   scale_color_viridis(discrete = T)
 g
@@ -150,7 +154,7 @@ sub_use_Opioid <- sub_use[sub_use$measure == "Deaths" &
 g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
   geom_point(show.legend = TRUE) +
   geom_line(show.legend = TRUE) +
-  labs(title = "Prevalence of opioid-related disease in the United States",
+  labs(title = "Deaths of opioid-related disease in the United States",
        x = "Year", y = "Prevalence") +
   facet_grid(. ~ sex) +
   scale_color_viridis(discrete = T)
@@ -163,7 +167,31 @@ From the plot, we can confirm an increase in the prevalence of diseases related 
 
 # Part 2: Ask your own Question
 
+## Question 4: When we plot the "val" according to "year" (taking the prevalence of opioid use disorders as an example), we can find that there's some visible differences among locations. Therefore it leads to our own question: Are there any rules for distinguishing the locations by other attributes?
+
 In this part, we will build a classification tree model using C5.0 algorithm provided by R package `C50`. The following part reveals the training process, and the question we ask will be stated below.
+
+
+First, we use ggplot function to plot scatter plots of the prevalence value of Opioid use disorders and placet it according to sex and location. 
+
+```{r,fig.width=8, fig.height=8}
+
+sub_use_Opioid <- sub_use[sub_use$measure == "Prevalence" &
+                                 sub_use$cause == "Opioid use disorders",]
+
+g <- ggplot(sub_use_Opioid, aes(x = year, y = val, color = age)) +
+        geom_point(show.legend = TRUE) +
+        geom_line(show.legend = TRUE) +
+        labs(title = "Prevalence of opioid-related disease in all locations",
+             x = "Year", y = "Prevalence") +
+        #facet_grid(location ~ sex) +
+        scale_color_viridis(discrete = T)+
+  theme(panel.spacing.x = unit(1.2,"lines"))
+g<-facet(g,facet.by = c("location","sex"),panel.labs.font.y = list(angle=0),scales = "free")
+g
+```
+
+As can be seen from the above figure, some visible differences can be seen among other regions. Therefore, we decided to explore whether the distinction between locations exist and the contribution of each factor (sex,age,cause,val,upper,lower,measure,year) to the region, that is, how much difference each data contributes.
 
 ```{r Training}
 sub_use_rand <- sub_use[order(runif(15000)),]
@@ -190,9 +218,11 @@ The following table shows factors that do matter in this module.
 ```{r Factors}
 #Print the usage attribute
 attributeUsage <- strsplit(m$output, "Attribute usage")[[1]][2]
+attributeUsage<-paste("Attribute usage", attributeUsage,sep="")
 cat(attributeUsage)
 rm(attributeUsage)
 ```
+From the table, we can see that age and cause have a greater impact on region, followed by year and gender.The contribution of measurement indicators is the smallest, which is in line with our common sense.
 
 The following graph shows the error rate, from which we can know that this model is over-fitting.
 
@@ -235,7 +265,9 @@ rm(test.label)
 rm(test.location)
 ```
 
-## Question 4: TODO
+It can be found from the two heat maps that the predicted result is close to the actual result, which proves that our machine learning model is basically correct. Additionally, the existence of a practical decision tree can confirm the significant differences between locations.
+
+
 
 # Cleaning Up
 
