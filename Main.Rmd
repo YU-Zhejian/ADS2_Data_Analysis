@@ -1,5 +1,5 @@
 ---
-title: "Report"
+title: "ADS2 Data Analysis Report"
 author: "ADS2 Group 4"
 date: "`r Sys.time()`"
 output:
@@ -126,7 +126,7 @@ From the graph, we can know that:
 * For males, the prevalence of alcohol-related disease in the East Asia and Pacific region rises from 1990 to 1995, and decreases to 2005, and then rise again non-stop for those aged 25 to 54. For those who are 55 to 69, they reached to peak in about 2017 and decreases afterwards.
 * Comparing to males, there are no significant changes in females.
 
-To determine whether there is a difference between man and woman, we plot a violin plot as statistical tests are explicitly announced to be unnecessary.
+To determine whether there is a difference between males and females, we plot a violin plot as statistical tests are explicitly announced to be unnecessary.
 
 ```{r P1Q2.2}
 g <- ggplot(sub_use_alcohol) +
@@ -139,7 +139,7 @@ rm(sub_use_alcohol)
 rm(g)
 ```
 
-From this violin plot, we can conclude that there is a difference between male and female. Female is significantly lower than male.
+From this violin plot, we can conclude that there is a difference of disease prevalence between male and female with a true difference of ~2.2%. Female is significantly lower than male.
 
 ## Question 3: Looking at the data from the United States, can you confirm an increase in the prevalence of diseases related to opioid use? What age group is the most affected?
 
@@ -167,7 +167,7 @@ rm(sub_use_Opioid)
 rm(g)
 ```
 
-From the plot, we can confirm an increase in the prevalence of diseases related to opioid use. Both men and women in 25-29 age group are the most affected because of their highest initial values and growth of the opioid-related prevalence.
+From the plot, we can confirm an increase in the prevalence of diseases related to opioid use. Both males and females in 25-29 age group are the most affected because of their highest initial values and growth of the opioid-related prevalence.
 
 # Part 2: Ask your own Question
 
