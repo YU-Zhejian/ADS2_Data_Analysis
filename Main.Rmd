@@ -198,7 +198,9 @@ g <- facet(g, facet.by = c("location", "sex"), panel.labs.font.y = list(angle = 
 g
 ```
 
-As can be seen from the above figure, some visible differences can be seen among other regions. Therefore, we decided to explore whether there is distinction between locations, and the contribution of each factor (`sex`, `age`, `cause`, `measure`, `year`, `val`) to the region, that is, how much difference each data contributes.
+As can be seen from the above figure, there are some specific featrues of each region plot. Therefore, we decided to explore whether there is significat distinction between locations, and the contribution of each factor (`sex`, `age`, `cause`, `measure`, `year`, `val`) to the region, that is, how much difference each attribute contributes.
+
+To achieve this, we divided the cleaned data randomly into two groups for training `train.data` and testing `test.data` respectively. We use `C5.0`function imported from R package  `C50` to build and train the tree.
 
 ```{r Training}
 sub_use_rand <- sub_use[order(runif(15000)),]
@@ -220,7 +222,7 @@ rm(train.label)
 rm(test)
 ```
 
-The following table shows factors that do matter in this module.
+The following table shows factors that do matter in this module. The percent is extracted from the decision tree model.
 
 ```{r Factors}
 #Print the usage attribute
@@ -229,7 +231,7 @@ cat(paste0("Attribute usage", strsplit(m$output, "Attribute usage")[[1]][2]))
 
 From the table, we can see that age and cause have a greater impact on the region, followed by year and gender. The contribution of measurement indicators is the smallest, which is in line with our common sense.
 
-The following graph shows the error rate, from which we can know that this model is over-fitting.
+Then we use `ggscatter` to plot the following graph to show the error rate, from which we can know that this model is over-fitting.
 
 ```{r Error Rate}
 err <- m$boostResults
@@ -240,12 +242,14 @@ ggscatter(err, x = "Trial", y = "Percent", add = "reg.line",
 rm(err)
 ```
 
-The following piece of code performs the prediction.
+After that, `predict`function is used to perform the prediction based on the tree and test its accuracy by `test.data`.
 
 ```{r Prediction}
 pred <- predict(m, test.data, type = "class")
 rm(test.data)
 ```
+
+We replace the poor print of the prediction result from `predict` function with the following code.
 
 The following graph shows the confusion matrix, both unnormalized and normalized with Log-Normalization.
 
