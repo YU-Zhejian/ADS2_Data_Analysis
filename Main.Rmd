@@ -32,7 +32,7 @@ knitr::opts_chunk$set(cache = TRUE)
 knitr::opts_chunk$set(echo = TRUE)
 # Check whether the dependencies are met
 installed <- installed.packages()[, 1]
-required <- c("tidyverse", "ggubr", "knitr", "rmarkdown", "stringr", "viridis", "C50", "pheatmap")
+required <- c("tidyverse", "ggpubr", "knitr", "rmarkdown", "stringr", "viridis", "C50", "pheatmap")
 for (packages in required) {
   if (!packages %in% installed) {
     simpleError(paste0("Package ", packages, " not installed."))
@@ -198,9 +198,9 @@ g <- facet(g, facet.by = c("location", "sex"), panel.labs.font.y = list(angle = 
 g
 ```
 
-As can be seen from the above figure, there are some specific featrues of each region plot. Therefore, we decided to explore whether there is significat distinction between locations, and the contribution of each factor (`sex`, `age`, `cause`, `measure`, `year`, `val`) to the region, that is, how much difference each attribute contributes.
+As can be seen from the above figure, there are some specific features of each region plot. Therefore, we decided to explore whether there is a significant distinction between locations, and the contribution of each factor (`sex`, `age`, `cause`, `measure`, `year`, `val`) to the region, that is, how much difference each attribute contributes.
 
-To achieve this, we divided the cleaned data randomly into two groups for training `train.data` and testing `test.data` respectively. We use `C5.0`function imported from R package  `C50` to build and train the tree.
+To achieve this, we divided the cleaned data randomly into two groups for training `train.data` and testing `test.data` respectively. We use `C5.0` function imported from R package  `C50` to build and train the tree.
 
 ```{r Training}
 sub_use_rand <- sub_use[order(runif(15000)),]
@@ -242,7 +242,7 @@ ggscatter(err, x = "Trial", y = "Percent", add = "reg.line",
 rm(err)
 ```
 
-After that, `predict`function is used to perform the prediction based on the tree and test its accuracy by `test.data`.
+After that, `predict` function is used to perform the prediction based on the tree and test its accuracy by `test.data`.
 
 ```{r Prediction}
 pred <- predict(m, test.data, type = "class")
